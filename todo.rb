@@ -1,86 +1,45 @@
-require "date"
+require "active_record"
 
-class Todo
-    # FILL YOUR CODE HERE
-  def initialize(text, due_date, completed)
-    @text = text
-    @due_date = due_date
-    @completed = completed
-  end
-
-  def overdue?
-    return @due_date < Date.today
-  end
-    # FILL YOUR CODE HERE
+class Todo < ActiveRecord::Base
   def due_today?
-    @due_date == Date.today
-  end
-
-  def due_later?
-    @due_date > Date.today
+    due_date == Date.today
   end
 
   def to_displayable_string
-    # FILL YOUR CODE HERE
-    displayable_status = @completed ? "[X]" : "[ ]"
-    display_date = due_today? ? nil : @due_date
-    "#{displayable_status} #{@text} #{display_date}"
+    display_status = completed ? "[X]" : "[ ]"
+    display_date = due_today? ? nil : due_date
+    "#{id}. #{display_status} #{todo_text} #{display_date}"
+  end
+
+  def self.overdue
+    where("due_date < ?", Date.today)
+  end
+
+  def self.due_today
+    where("due_date = ?", Date.today)
+  end
+
+  def self.due_later
+    where("due_date > ?", Date.today)
+  end
+
+  def self.show_list
+    puts "\nMy Todo-List\n\nOverdue\n"
+    puts overdue.map { |todo| todo.to_displayable_string }
+    puts "\nDue Today\n"
+    puts due_today.map { |todo| todo.to_displayable_string }
+    puts "\nDue Later\n"
+    puts due_later.map { |todo| todo.to_displayable_string }
+  end
+
+  def self.add_task(h)
+    Todo.create!(todo_text: h[:todo_text], due_date: Date.today + h[:due_in_days], completed: false)
+  end
+
+  def self.mark_as_complete(id)
+    to_mark = Todo.find(id)
+    to_mark.completed = true
+    to_mark.save
+    to_mark
   end
 end
-
-class TodosList
-  def initialize(todos)
-    @todos = todos
-  end
-
-  def overdue
-    TodosList.new(@todos.filter { |todo| todo.overdue? })
-  end
-    # FILL YOUR CODE HERE
-  def due_today
-    TodosList.new(@todos.filter { |todo| todo.due_today? })
-  end
-
-  def due_later
-    TodosList.new(@todos.filter { |todo| todo.due_later? })
-  end
-
-  def add(todo)
-    @todos.push(todo)
-  end
-
-  def to_displayable_list
-    # FILL YOUR CODE HERE
-    @todos.map { |todo| todo.to_displayable_string }
-  end
-end
-
-date = Date.today
-todos = [
-  { text: "Submit assignment", due_date: date - 1, completed: false },
-  { text: "Pay rent", due_date: date, completed: true },
-  { text: "File taxes", due_date: date + 1, completed: false },
-  { text: "Call Acme Corp.", due_date: date + 1, completed: false },
-]
-
-todos = todos.map { |todo|
-  Todo.new(todo[:text], todo[:due_date], todo[:completed])
-}
-
-todos_list = TodosList.new(todos)
-
-todos_list.add(Todo.new("Service vehicle", date, false))
-
-puts "My Todo-list\n\n"
-
-puts "Overdue\n"
-puts todos_list.overdue.to_displayable_list
-puts "\n\n"
-
-puts "Due Today\n"
-puts todos_list.due_today.to_displayable_list
-puts "\n\n"
-
-puts "Due Later\n"
-puts todos_list.due_later.to_displayable_list
-puts "\n\n"
