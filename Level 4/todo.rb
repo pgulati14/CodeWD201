@@ -49,6 +49,6 @@ class Todo < ActiveRecord::Base
     todo_completion = find(todo_id)
     todo_completion.completed = true
     todo_completion.save
-    return todo_completion
+    todo_completion
   end
 end
